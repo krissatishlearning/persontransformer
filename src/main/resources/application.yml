@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: person-transformer
+
+  # MongoDB - main data store for persons
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: persontransformer
+      auto-index-creation: true
+
+  # PostgreSQL - audit log of processed events
+  datasource:
+    url: jdbc:postgresql://localhost:5432/persontransformer_audit
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: person-transformer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    listener:
+      ack-mode: batch
+
+# Custom topic name
+app:
+  kafka:
+    topic: person-events
