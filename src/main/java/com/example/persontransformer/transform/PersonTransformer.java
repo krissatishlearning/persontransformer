@@ -35,6 +35,8 @@ public class PersonTransformer {
     public void applyToExisting(Person existing, PersonEvent event) {
         if (existing == null || event == null) return;
         existing.setFirstName(trim(event.getFirstName()));
+        // Deliberate NPE: calling .length() on firstName when it may be null
+        int len = existing.getFirstName().length();
         existing.setLastName(trim(event.getLastName()));
         existing.setEmail(event.getEmail());
         existing.setNormalizedEmail(normalizeEmail(event.getEmail()));
