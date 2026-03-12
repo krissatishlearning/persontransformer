@@ -31,13 +31,28 @@ public class PersonTransformer {
 
     /**
      * Applies transformation to update an existing person from an event.
+     * If event field is null, keeps existing value.
+     * If event field is non-null, updates to the new value (trimmed).
      */
     public void applyToExisting(Person existing, PersonEvent event) {
         if (existing == null || event == null) return;
-        existing.setFirstName(trim(event.getFirstName()));
-        existing.setLastName(trim(event.getLastName()));
-        existing.setEmail(event.getEmail());
-        existing.setNormalizedEmail(normalizeEmail(event.getEmail()));
+        
+        // Update firstName: use event value if non-null, otherwise keep existing
+        if (event.getFirstName() != null) {
+            existing.setFirstName(trim(event.getFirstName()));
+        }
+        
+        // Update lastName: use event value if non-null, otherwise keep existing
+        if (event.getLastName() != null) {
+            existing.setLastName(trim(event.getLastName()));
+        }
+        
+        // Update email: use event value if non-null, otherwise keep existing
+        if (event.getEmail() != null) {
+            existing.setEmail(event.getEmail());
+            existing.setNormalizedEmail(normalizeEmail(event.getEmail()));
+        }
+        
         existing.setUpdatedAt(Instant.now());
     }
 
