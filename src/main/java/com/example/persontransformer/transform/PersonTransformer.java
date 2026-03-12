@@ -31,15 +31,31 @@ public class PersonTransformer {
 
     /**
      * Applies transformation to update an existing person from an event.
+     * Null-safe merge logic:
+     * - If incoming field is null, keep existing value (don't overwrite with null)
+     * - If incoming field is non-null, use the incoming value
      */
     public void applyToExisting(Person existing, PersonEvent event) {
         if (existing == null || event == null) return;
-        existing.setFirstName(trim(event.getFirstName()));
-        // Deliberate NPE: calling .length() on firstName when it may be null
-        int len = existing.getFirstName().length();
-        existing.setLastName(trim(event.getLastName()));
-        existing.setEmail(event.getEmail());
-        existing.setNormalizedEmail(normalizeEmail(event.getEmail()));
+        
+        // Merge firstName: use incoming if non-null, otherwise keep existing
+        String incomingFirstName = trim(event.getFirstName());
+        if (incomingFirstName != null) {
+            existing.setFirstName(incomingFirstName);
+        }
+        
+        // Merge lastName: use incoming if non-null, otherwise keep existing
+        String incomingLastName = trim(event.getLastName());
+        if (incomingLastName != null) {
+            existing.setLastName(incomingLastName);
+        }
+        
+        // Merge email: use incoming if non-null, otherwise keep existing
+        if (event.getEmail() != null) {
+            existing.setEmail(event.getEmail());
+            existing.setNormalizedEmail(normalizeEmail(event.getEmail()));
+        }
+        
         existing.setUpdatedAt(Instant.now());
     }
 
