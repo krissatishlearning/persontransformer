@@ -5,6 +5,7 @@ import com.example.persontransformer.dto.PersonEvent;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * Transforms incoming Kafka person events into the domain Person model.
@@ -21,6 +22,7 @@ public class PersonTransformer {
         return new Person(
                 null,
                 event.getExternalId(),
+                UUID.randomUUID(),
                 trim(event.getFirstName()),
                 trim(event.getLastName()),
                 event.getEmail(),
@@ -32,6 +34,7 @@ public class PersonTransformer {
     /**
      * Applies transformation to update an existing person from an event.
      * Null-safe: if incoming field is null, keeps existing value; if incoming is non-null, uses it.
+     * Retains the existing resourceId during updates.
      */
     public void applyToExisting(Person existing, PersonEvent event) {
         if (existing == null || event == null) return;
@@ -41,6 +44,7 @@ public class PersonTransformer {
         existing.setEmail(mergeField(existing.getEmail(), event.getEmail()));
         existing.setNormalizedEmail(normalizeEmail(existing.getEmail()));
         existing.setUpdatedAt(Instant.now());
+        // resourceId is retained from existing - no change
     }
 
     /**

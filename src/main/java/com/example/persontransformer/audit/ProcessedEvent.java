@@ -2,11 +2,13 @@ package com.example.persontransformer.audit;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "processed_events", indexes = {
     @Index(name = "idx_external_id", columnList = "externalId"),
-    @Index(name = "idx_processed_at", columnList = "processedAt")
+    @Index(name = "idx_processed_at", columnList = "processedAt"),
+    @Index(name = "idx_resource_id", columnList = "resourceId")
 })
 public class ProcessedEvent {
 
@@ -16,6 +18,9 @@ public class ProcessedEvent {
 
     @Column(nullable = false)
     private String externalId;
+
+    @Column
+    private UUID resourceId;
 
     @Column(nullable = false)
     private String action; // INSERT or UPDATE
@@ -30,8 +35,9 @@ public class ProcessedEvent {
     public ProcessedEvent() {
     }
 
-    public ProcessedEvent(String externalId, String action, Instant processedAt, String kafkaTopic, Integer kafkaPartition, Long kafkaOffset) {
+    public ProcessedEvent(String externalId, UUID resourceId, String action, Instant processedAt, String kafkaTopic, Integer kafkaPartition, Long kafkaOffset) {
         this.externalId = externalId;
+        this.resourceId = resourceId;
         this.action = action;
         this.processedAt = processedAt;
         this.kafkaTopic = kafkaTopic;
@@ -53,6 +59,14 @@ public class ProcessedEvent {
 
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    public UUID getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(UUID resourceId) {
+        this.resourceId = resourceId;
     }
 
     public String getAction() {

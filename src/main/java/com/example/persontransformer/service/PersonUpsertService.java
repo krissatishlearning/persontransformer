@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * Checks MongoDB for existing person by externalId.
@@ -44,21 +45,25 @@ public class PersonUpsertService {
 
         var existingOpt = mongoRepository.findByExternalId(event.getExternalId());
         String action;
+        UUID resourceId;
         if (existingOpt.isEmpty()) {
             Person newPerson = transformer.transform(event);
             mongoRepository.save(newPerson);
             action = "INSERT";
+            resourceId = newPerson.getResourceId();
             log.info("Inserted person externalId={}", event.getExternalId());
         } else {
             Person existing = existingOpt.get();
             transformer.applyToExisting(existing, event);
             mongoRepository.save(existing);
             action = "UPDATE";
+            resourceId = existing.getResourceId();
             log.info("Updated person externalId={}", event.getExternalId());
         }
 
         ProcessedEvent audit = new ProcessedEvent(
                 event.getExternalId(),
+                resourceId,
                 action,
                 Instant.now(),
                 topic,

@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Document(collection = "persons")
 public class Person {
@@ -15,6 +16,9 @@ public class Person {
     @Indexed(unique = true)
     private String externalId;
 
+    @Indexed
+    private UUID resourceId;
+
     private String firstName;
     private String lastName;
     private String email;
@@ -24,9 +28,10 @@ public class Person {
     public Person() {
     }
 
-    public Person(String id, String externalId, String firstName, String lastName, String email, String normalizedEmail, Instant updatedAt) {
+    public Person(String id, String externalId, UUID resourceId, String firstName, String lastName, String email, String normalizedEmail, Instant updatedAt) {
         this.id = id;
         this.externalId = externalId;
+        this.resourceId = resourceId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -48,6 +53,14 @@ public class Person {
 
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    public UUID getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(UUID resourceId) {
+        this.resourceId = resourceId;
     }
 
     public String getFirstName() {
