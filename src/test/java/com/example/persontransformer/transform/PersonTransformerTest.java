@@ -41,4 +41,74 @@ class PersonTransformerTest {
         assertThat(existing.getNormalizedEmail()).isEqualTo("new@x.com");
         assertThat(existing.getUpdatedAt()).isNotNull();
     }
+
+    @Test
+    void applyToExisting_whenExistingFirstNameIsNull_updatesFromEvent() {
+        Person existing = new Person("mongo-id", "ext-1", null, "Doe", "jane@x.com", "jane@x.com", null);
+        PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", "jane@x.com");
+
+        transformer.applyToExisting(existing, event);
+
+        assertThat(existing.getFirstName()).isEqualTo("Jane");
+        assertThat(existing.getLastName()).isEqualTo("Doe");
+    }
+
+    @Test
+    void applyToExisting_whenEventFirstNameIsNull_keepsExistingValue() {
+        Person existing = new Person("mongo-id", "ext-1", "Jane", "Doe", "jane@x.com", "jane@x.com", null);
+        PersonEvent event = new PersonEvent("ext-1", null, "Doe", "jane@x.com");
+
+        transformer.applyToExisting(existing, event);
+
+        assertThat(existing.getFirstName()).isEqualTo("Jane");
+        assertThat(existing.getLastName()).isEqualTo("Doe");
+    }
+
+    @Test
+    void applyToExisting_whenEventLastNameIsNull_keepsExistingValue() {
+        Person existing = new Person("mongo-id", "ext-1", "Jane", "Doe", "jane@x.com", "jane@x.com", null);
+        PersonEvent event = new PersonEvent("ext-1", "Jane", null, "jane@x.com");
+
+        transformer.applyToExisting(existing, event);
+
+        assertThat(existing.getFirstName()).isEqualTo("Jane");
+        assertThat(existing.getLastName()).isEqualTo("Doe");
+    }
+
+    @Test
+    void applyToExisting_whenEventEmailIsNull_keepsExistingValue() {
+        Person existing = new Person("mongo-id", "ext-1", "Jane", "Doe", "jane@x.com", "jane@x.com", null);
+        PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", null);
+
+        transformer.applyToExisting(existing, event);
+
+        assertThat(existing.getEmail()).isEqualTo("jane@x.com");
+        assertThat(existing.getNormalizedEmail()).isEqualTo("jane@x.com");
+    }
+
+    @Test
+    void applyToExisting_whenBothExistingAndEventAreNull_noNPE() {
+        Person existing = new Person("mongo-id", "ext-1", null, null, null, null, null);
+        PersonEvent event = new PersonEvent("ext-1", null, null, null);
+
+        transformer.applyToExisting(existing, event);
+
+        assertThat(existing.getFirstName()).isNull();
+        assertThat(existing.getLastName()).isNull();
+        assertThat(existing.getEmail()).isNull();
+        assertThat(existing.getUpdatedAt()).isNotNull();
+    }
+
+    @Test
+    void applyToExisting_trimsIncomingValues() {
+        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", "old@x.com", null);
+        PersonEvent event = new PersonEvent("ext-1", "  New  ", "  Updated  ", "  new@x.com  ");
+
+        transformer.applyToExisting(existing, event);
+
+        assertThat(existing.getFirstName()).isEqualTo("New");
+        assertThat(existing.getLastName()).isEqualTo("Updated");
+        assertThat(existing.getEmail()).isEqualTo("  new@x.com  ");
+        assertThat(existing.getNormalizedEmail()).isEqualTo("new@x.com");
+    }
 }
