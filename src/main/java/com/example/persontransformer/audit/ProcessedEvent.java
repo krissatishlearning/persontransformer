@@ -7,7 +7,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "processed_events", indexes = {
     @Index(name = "idx_external_id", columnList = "externalId"),
-    @Index(name = "idx_processed_at", columnList = "processedAt")
+    @Index(name = "idx_processed_at", columnList = "processedAt"),
+    @Index(name = "idx_resource_id", columnList = "resourceId")
 })
 public class ProcessedEvent {
 

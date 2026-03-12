@@ -16,6 +16,7 @@ public class Person {
     @Indexed(unique = true)
     private String externalId;
 
+    @Indexed
     private UUID resourceId;
 
     private String firstName;
