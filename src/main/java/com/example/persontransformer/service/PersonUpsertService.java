@@ -57,8 +57,16 @@ public class PersonUpsertService {
             log.info("Updated person externalId={}", event.getExternalId());
         }
 
+        recordProcessedEvent(event.getExternalId(), action, topic, partition, offset);
+    }
+
+    /**
+     * Records the processed event in the PostgreSQL audit table.
+     * Extracted into its own method to support future additional audit implementations.
+     */
+    private void recordProcessedEvent(String externalId, String action, String topic, int partition, long offset) {
         ProcessedEvent audit = new ProcessedEvent(
-                event.getExternalId(),
+                externalId,
                 action,
                 Instant.now(),
                 topic,
@@ -66,5 +74,7 @@ public class PersonUpsertService {
                 offset
         );
         auditRepository.save(audit);
+        log.debug("Recorded audit event: externalId={}, action={}, topic={}, partition={}, offset={}",
+                externalId, action, topic, partition, offset);
     }
 }
