@@ -19,7 +19,7 @@ public class PersonEventConsumer {
         this.upsertService = upsertService;
     }
 
-    @KafkaListener(topics = "${app.kafka.topic:person-events}")
+    @KafkaListener(topics = {"${app.kafka.topic:person-events}", "${app.kafka.topic2:TP.SOURCE.TWO}"})
     public void consume(ConsumerRecord<String, PersonEvent> record) {
         PersonEvent event = record.value();
         if (event == null) {
