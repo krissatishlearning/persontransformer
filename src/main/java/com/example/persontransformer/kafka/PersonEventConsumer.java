@@ -24,7 +24,7 @@ public class PersonEventConsumer {
         processRecord(record);
     }
 
-    @KafkaListener(topics = "TP.SOURCE.TWO")
+    @KafkaListener(topics = "${app.kafka.topic-source-two:TP.SOURCE.TWO}")
     public void consumeSourceTwo(ConsumerRecord<String, PersonEvent> record) {
         processRecord(record);
     }
