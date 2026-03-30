@@ -5,6 +5,8 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "persons")
 public class Person {
@@ -20,8 +22,12 @@ public class Person {
     private String email;
     private String normalizedEmail;
     private Instant updatedAt;
+    private List<Address> addresses;
+    private List<Phone> phones;
 
     public Person() {
+        this.addresses = new ArrayList<>();
+        this.phones = new ArrayList<>();
     }
 
     public Person(String id, String externalId, String firstName, String lastName, String email, String normalizedEmail, Instant updatedAt) {
@@ -32,6 +38,20 @@ public class Person {
         this.email = email;
         this.normalizedEmail = normalizedEmail;
         this.updatedAt = updatedAt;
+        this.addresses = new ArrayList<>();
+        this.phones = new ArrayList<>();
+    }
+
+    public Person(String id, String externalId, String firstName, String lastName, String email, String normalizedEmail, Instant updatedAt, List<Address> addresses, List<Phone> phones) {
+        this.id = id;
+        this.externalId = externalId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.normalizedEmail = normalizedEmail;
+        this.updatedAt = updatedAt;
+        this.addresses = addresses != null ? addresses : new ArrayList<>();
+        this.phones = phones != null ? phones : new ArrayList<>();
     }
 
     public String getId() {
@@ -88,5 +108,21 @@ public class Person {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<Address> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<Address> addresses) {
+        this.addresses = addresses;
+    }
+
+    public List<Phone> getPhones() {
+        return phones;
+    }
+
+    public void setPhones(List<Phone> phones) {
+        this.phones = phones;
     }
 }
