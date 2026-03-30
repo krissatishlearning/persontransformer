@@ -9,6 +9,8 @@ public class PersonEvent {
     private String firstName;
     private String lastName;
     private String email;
+    private String race;
+    private String ethnicity;
 
     public PersonEvent() {
     }
@@ -18,6 +20,15 @@ public class PersonEvent {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+    }
+
+    public PersonEvent(String externalId, String firstName, String lastName, String email, String race, String ethnicity) {
+        this.externalId = externalId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.race = race;
+        this.ethnicity = ethnicity;
     }
 
     public String getExternalId() {
@@ -50,5 +61,21 @@ public class PersonEvent {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getRace() {
+        return race;
+    }
+
+    public void setRace(String race) {
+        this.race = race;
+    }
+
+    public String getEthnicity() {
+        return ethnicity;
+    }
+
+    public void setEthnicity(String ethnicity) {
+        this.ethnicity = ethnicity;
     }
 }
