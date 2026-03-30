@@ -37,7 +37,7 @@ public class PersonTransformer {
      */
     public void applyToExisting(Person existing, PersonEvent event) {
         if (existing == null || event == null) return;
-        
+
         existing.setFirstName(mergeField(existing.getFirstName(), trim(event.getFirstName())));
         existing.setLastName(mergeField(existing.getLastName(), trim(event.getLastName())));
         existing.setEmail(mergeField(existing.getEmail(), event.getEmail()));

@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 @EntityScan(basePackages = "com.example.persontransformer.audit")
-
 @SpringBootApplication
 @EnableMongoRepositories(basePackages = "com.example.persontransformer.repository")
 @EnableJpaRepositories(basePackages = "com.example.persontransformer.audit")
