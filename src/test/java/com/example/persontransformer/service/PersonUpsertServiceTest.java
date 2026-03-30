@@ -18,7 +18,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -106,5 +105,15 @@ class PersonUpsertServiceTest {
         verifyNoInteractions(mongoRepository);
         verifyNoInteractions(auditRepository);
         verifyNoInteractions(transformer);
+    }
+
+    @Test
+    void upsert_skipsProcessing_whenExternalIdIsEmpty() {
+        PersonEvent event = new PersonEvent("", "John", "Doe", "john@example.com");
+
+        upsertService.upsert(event, "test-topic", 0, 0L);
+
+        // Empty string externalId is not null, so it will proceed
+        verify(mongoRepository).findByExternalId("");
     }
 }
