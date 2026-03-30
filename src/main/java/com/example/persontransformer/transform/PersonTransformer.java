@@ -1,10 +1,17 @@
 package com.example.persontransformer.transform;
 
+import com.example.persontransformer.domain.Address;
 import com.example.persontransformer.domain.Person;
+import com.example.persontransformer.domain.Phone;
+import com.example.persontransformer.dto.AddressDTO;
 import com.example.persontransformer.dto.PersonEvent;
+import com.example.persontransformer.dto.PhoneDTO;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Transforms incoming Kafka person events into the domain Person model.
@@ -18,7 +25,7 @@ public class PersonTransformer {
             return null;
         }
         String normalizedEmail = normalizeEmail(event.getEmail());
-        return new Person(
+        Person person = new Person(
                 null,
                 event.getExternalId(),
                 trim(event.getFirstName()),
@@ -27,6 +34,9 @@ public class PersonTransformer {
                 normalizedEmail,
                 Instant.now()
         );
+        person.setAddresses(transformAddresses(event.getAddresses()));
+        person.setPhones(transformPhones(event.getPhones()));
+        return person;
     }
 
     /**
@@ -35,12 +45,61 @@ public class PersonTransformer {
      */
     public void applyToExisting(Person existing, PersonEvent event) {
         if (existing == null || event == null) return;
-        
+
         existing.setFirstName(mergeField(existing.getFirstName(), trim(event.getFirstName())));
         existing.setLastName(mergeField(existing.getLastName(), trim(event.getLastName())));
         existing.setEmail(mergeField(existing.getEmail(), event.getEmail()));
         existing.setNormalizedEmail(normalizeEmail(existing.getEmail()));
         existing.setUpdatedAt(Instant.now());
+
+        if (event.getAddresses() != null) {
+            existing.setAddresses(transformAddresses(event.getAddresses()));
+        }
+        if (event.getPhones() != null) {
+            existing.setPhones(transformPhones(event.getPhones()));
+        }
+    }
+
+    List<Address> transformAddresses(List<AddressDTO> addressDTOs) {
+        if (addressDTOs == null) {
+            return new ArrayList<>();
+        }
+        return addressDTOs.stream()
+                .map(this::transformAddress)
+                .collect(Collectors.toList());
+    }
+
+    Address transformAddress(AddressDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        return new Address(
+                trim(dto.getAddress1()),
+                trim(dto.getAddress2()),
+                trim(dto.getCity()),
+                trim(dto.getState()),
+                trim(dto.getPostalCode()),
+                trim(dto.getCountry())
+        );
+    }
+
+    List<Phone> transformPhones(List<PhoneDTO> phoneDTOs) {
+        if (phoneDTOs == null) {
+            return new ArrayList<>();
+        }
+        return phoneDTOs.stream()
+                .map(this::transformPhone)
+                .collect(Collectors.toList());
+    }
+
+    Phone transformPhone(PhoneDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        return new Phone(
+                trim(dto.getPhoneNumber()),
+                trim(dto.getPhoneType())
+        );
     }
 
     /**
