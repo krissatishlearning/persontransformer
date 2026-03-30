@@ -21,6 +21,15 @@ public class PersonEventConsumer {
 
     @KafkaListener(topics = "${app.kafka.topic:person-events}")
     public void consume(ConsumerRecord<String, PersonEvent> record) {
+        processRecord(record);
+    }
+
+    @KafkaListener(topics = "${app.kafka.topic-two:TP.SOURCE.TWO}")
+    public void consumeFromTopicTwo(ConsumerRecord<String, PersonEvent> record) {
+        processRecord(record);
+    }
+
+    private void processRecord(ConsumerRecord<String, PersonEvent> record) {
         PersonEvent event = record.value();
         if (event == null) {
             log.warn("Received null payload from topic {} partition {} offset {}",
