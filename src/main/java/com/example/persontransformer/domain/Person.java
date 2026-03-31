@@ -21,8 +21,6 @@ public class Person {
     private String lastName;
     private String email;
     private String normalizedEmail;
-    private String race;
-    private String ethnicity;
     private Instant updatedAt;
     private List<Address> addresses;
     private List<Phone> phones;
@@ -51,34 +49,6 @@ public class Person {
         this.lastName = lastName;
         this.email = email;
         this.normalizedEmail = normalizedEmail;
-        this.updatedAt = updatedAt;
-        this.addresses = addresses != null ? addresses : new ArrayList<>();
-        this.phones = phones != null ? phones : new ArrayList<>();
-    }
-
-    public Person(String id, String externalId, String firstName, String lastName, String email, String normalizedEmail, String race, String ethnicity, Instant updatedAt) {
-        this.id = id;
-        this.externalId = externalId;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.normalizedEmail = normalizedEmail;
-        this.race = race;
-        this.ethnicity = ethnicity;
-        this.updatedAt = updatedAt;
-        this.addresses = new ArrayList<>();
-        this.phones = new ArrayList<>();
-    }
-
-    public Person(String id, String externalId, String firstName, String lastName, String email, String normalizedEmail, String race, String ethnicity, Instant updatedAt, List<Address> addresses, List<Phone> phones) {
-        this.id = id;
-        this.externalId = externalId;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.normalizedEmail = normalizedEmail;
-        this.race = race;
-        this.ethnicity = ethnicity;
         this.updatedAt = updatedAt;
         this.addresses = addresses != null ? addresses : new ArrayList<>();
         this.phones = phones != null ? phones : new ArrayList<>();
@@ -130,22 +100,6 @@ public class Person {
 
     public void setNormalizedEmail(String normalizedEmail) {
         this.normalizedEmail = normalizedEmail;
-    }
-
-    public String getRace() {
-        return race;
-    }
-
-    public void setRace(String race) {
-        this.race = race;
-    }
-
-    public String getEthnicity() {
-        return ethnicity;
-    }
-
-    public void setEthnicity(String ethnicity) {
-        this.ethnicity = ethnicity;
     }
 
     public Instant getUpdatedAt() {
