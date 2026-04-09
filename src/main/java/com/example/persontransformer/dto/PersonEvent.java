@@ -11,7 +11,6 @@ public class PersonEvent {
     private String firstName;
     private String lastName;
     private String email;
-    private String race;
     private String ethnicity;
     private List<AddressDTO> addresses;
     private List<PhoneDTO> phones;
@@ -37,13 +36,12 @@ public class PersonEvent {
     }
 
     public PersonEvent(String externalId, String firstName, String lastName, String email,
-                       String race, String ethnicity,
+                       String ethnicity,
                        List<AddressDTO> addresses, List<PhoneDTO> phones) {
         this.externalId = externalId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.race = race;
         this.ethnicity = ethnicity;
         this.addresses = addresses;
         this.phones = phones;
@@ -79,14 +77,6 @@ public class PersonEvent {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getRace() {
-        return race;
-    }
-
-    public void setRace(String race) {
-        this.race = race;
     }
 
     public String getEthnicity() {
