@@ -11,6 +11,8 @@ public class PersonEvent {
     private String firstName;
     private String lastName;
     private String email;
+    private String race;
+    private String ethnicity;
     private List<AddressDTO> addresses;
     private List<PhoneDTO> phones;
 
@@ -63,6 +65,22 @@ public class PersonEvent {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getRace() {
+        return race;
+    }
+
+    public void setRace(String race) {
+        this.race = race;
+    }
+
+    public String getEthnicity() {
+        return ethnicity;
+    }
+
+    public void setEthnicity(String ethnicity) {
+        this.ethnicity = ethnicity;
     }
 
     public List<AddressDTO> getAddresses() {
