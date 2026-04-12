@@ -20,6 +20,8 @@ public class Person {
     private String firstName;
     private String lastName;
     private String email;
+    private String race;
+    private String ethnicity;
     private Instant updatedAt;
     private List<Address> addresses;
     private List<Phone> phones;
@@ -89,6 +91,22 @@ public class Person {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getRace() {
+        return race;
+    }
+
+    public void setRace(String race) {
+        this.race = race;
+    }
+
+    public String getEthnicity() {
+        return ethnicity;
+    }
+
+    public void setEthnicity(String ethnicity) {
+        this.ethnicity = ethnicity;
     }
 
     public Instant getUpdatedAt() {
