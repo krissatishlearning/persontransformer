@@ -31,8 +31,3 @@ A Spring Boot Kafka consumer that reads `PersonEvent` messages from Kafka topics
 - Email normalization: always `trim().toLowerCase()`
 - Null-safe merge: incoming non-null value wins; otherwise keep existing value
 - DTOs annotate with `@JsonIgnoreProperties(ignoreUnknown = true)`
-
-## Do NOT
-- Add `race` or `ethnicity` fields to `Person` or `PersonEvent`
-- Add a `normalizedEmail` field to `Person` (normalization is done in-flight by the transformer)
-- Modify Kafka topic names directly in code — they are externalised via `app.kafka.topic` and `app.kafka.topic-two` properties
