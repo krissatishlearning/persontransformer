@@ -13,6 +13,7 @@ public class PersonEvent {
     private String email;
     private List<AddressDTO> addresses;
     private List<PhoneDTO> phones;
+    private PreferenceDTO preference;
 
     public PersonEvent() {
     }
@@ -31,6 +32,16 @@ public class PersonEvent {
         this.email = email;
         this.addresses = addresses;
         this.phones = phones;
+    }
+
+    public PersonEvent(String externalId, String firstName, String lastName, String email, List<AddressDTO> addresses, List<PhoneDTO> phones, PreferenceDTO preference) {
+        this.externalId = externalId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.addresses = addresses;
+        this.phones = phones;
+        this.preference = preference;
     }
 
     public String getExternalId() {
@@ -79,5 +90,13 @@ public class PersonEvent {
 
     public void setPhones(List<PhoneDTO> phones) {
         this.phones = phones;
+    }
+
+    public PreferenceDTO getPreference() {
+        return preference;
+    }
+
+    public void setPreference(PreferenceDTO preference) {
+        this.preference = preference;
     }
 }

@@ -3,9 +3,11 @@ package com.example.persontransformer.transform;
 import com.example.persontransformer.domain.Address;
 import com.example.persontransformer.domain.Person;
 import com.example.persontransformer.domain.Phone;
+import com.example.persontransformer.domain.Preference;
 import com.example.persontransformer.dto.AddressDTO;
 import com.example.persontransformer.dto.PersonEvent;
 import com.example.persontransformer.dto.PhoneDTO;
+import com.example.persontransformer.dto.PreferenceDTO;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -52,13 +54,11 @@ class PersonTransformerTest {
         PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", "jane@example.com");
         Person person = transformer.transform(event);
 
-        // Verify Person class no longer has race/ethnicity fields
         assertThat(person.getExternalId()).isEqualTo("ext-1");
         assertThat(person.getFirstName()).isEqualTo("Jane");
         assertThat(person.getLastName()).isEqualTo("Doe");
         assertThat(person.getEmail()).isEqualTo("jane@example.com");
 
-        // Ensure no race/ethnicity fields exist via reflection
         assertThat(java.util.Arrays.stream(Person.class.getDeclaredFields())
                 .map(java.lang.reflect.Field::getName)
                 .filter(name -> name.equals("race") || name.equals("ethnicity"))
@@ -67,7 +67,6 @@ class PersonTransformerTest {
 
     @Test
     void transform_doesNotContainNormalizedEmail() {
-        // Ensure no normalizedEmail field exists in Person via reflection
         assertThat(java.util.Arrays.stream(Person.class.getDeclaredFields())
                 .map(java.lang.reflect.Field::getName)
                 .filter(name -> name.equals("normalizedEmail"))
@@ -76,7 +75,6 @@ class PersonTransformerTest {
 
     @Test
     void personEvent_doesNotContainRaceOrEthnicity() {
-        // Ensure no race/ethnicity fields exist in PersonEvent via reflection
         assertThat(java.util.Arrays.stream(PersonEvent.class.getDeclaredFields())
                 .map(java.lang.reflect.Field::getName)
                 .filter(name -> name.equals("race") || name.equals("ethnicity"))
@@ -274,32 +272,95 @@ class PersonTransformerTest {
         assertThat(existing.getAddresses().get(0).getAddress1()).isEqualTo("Old St");
     }
 
+    // --- Preference tests ---
+
     @Test
-    void applyToExisting_withPhones_replacesExistingPhones() {
-        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
-        existing.setPhones(Collections.singletonList(new Phone("000-0000", "HOME")));
+    void transform_withPreference_mapsAllFields() {
+        PreferenceDTO prefDTO = new PreferenceDTO("555-9999", "pref@example.com", true);
+        PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", "jane@example.com", null, null, prefDTO);
+        Person person = transformer.transform(event);
 
-        List<PhoneDTO> newPhones = Collections.singletonList(
-                new PhoneDTO("555-9999", "MOBILE")
-        );
-        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com", null, newPhones);
-        transformer.applyToExisting(existing, event);
-
-        assertThat(existing.getPhones()).hasSize(1);
-        assertThat(existing.getPhones().get(0).getPhoneNumber()).isEqualTo("555-9999");
-        assertThat(existing.getPhones().get(0).getPhoneType()).isEqualTo("MOBILE");
+        assertThat(person.getPreference()).isNotNull();
+        assertThat(person.getPreference().getPreferredContactNumber()).isEqualTo("555-9999");
+        assertThat(person.getPreference().getPreferredEmail()).isEqualTo("pref@example.com");
+        assertThat(person.getPreference().getOptIn()).isTrue();
     }
 
     @Test
-    void applyToExisting_withNullPhonesInEvent_keepsExistingPhones() {
-        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
-        List<Phone> originalPhones = Collections.singletonList(new Phone("000-0000", "HOME"));
-        existing.setPhones(originalPhones);
+    void transform_withNullPreference_setsPreferenceToNull() {
+        PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", "jane@example.com");
+        Person person = transformer.transform(event);
 
-        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com", null, null);
+        assertThat(person.getPreference()).isNull();
+    }
+
+    @Test
+    void transform_withPreference_trimsContactNumber() {
+        PreferenceDTO prefDTO = new PreferenceDTO("  555-9999  ", "  pref@example.com  ", false);
+        PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", "jane@example.com", null, null, prefDTO);
+        Person person = transformer.transform(event);
+
+        assertThat(person.getPreference().getPreferredContactNumber()).isEqualTo("555-9999");
+        assertThat(person.getPreference().getPreferredEmail()).isEqualTo("pref@example.com");
+    }
+
+    @Test
+    void transform_withPreference_nullOptIn_defaultsFalse() {
+        PreferenceDTO prefDTO = new PreferenceDTO("555-9999", "pref@example.com", null);
+        PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", "jane@example.com", null, null, prefDTO);
+        Person person = transformer.transform(event);
+
+        assertThat(person.getPreference().getOptIn()).isFalse();
+    }
+
+    @Test
+    void preference_defaultOptInIsFalse() {
+        Preference pref = new Preference();
+        assertThat(pref.getOptIn()).isFalse();
+    }
+
+    @Test
+    void applyToExisting_withPreference_mergesFields() {
+        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
+        Preference existingPref = new Preference("111-1111", "old-pref@example.com", false);
+        existing.setPreference(existingPref);
+
+        PreferenceDTO incomingPref = new PreferenceDTO("222-2222", null, true);
+        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com", null, null, incomingPref);
         transformer.applyToExisting(existing, event);
 
-        assertThat(existing.getPhones()).hasSize(1);
-        assertThat(existing.getPhones().get(0).getPhoneNumber()).isEqualTo("000-0000");
+        assertThat(existing.getPreference().getPreferredContactNumber()).isEqualTo("222-2222");
+        // null incoming keeps existing
+        assertThat(existing.getPreference().getPreferredEmail()).isEqualTo("old-pref@example.com");
+        assertThat(existing.getPreference().getOptIn()).isTrue();
+    }
+
+    @Test
+    void applyToExisting_withNullPreferenceInEvent_keepsExistingPreference() {
+        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
+        Preference existingPref = new Preference("111-1111", "old-pref@example.com", true);
+        existing.setPreference(existingPref);
+
+        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com");
+        transformer.applyToExisting(existing, event);
+
+        assertThat(existing.getPreference()).isNotNull();
+        assertThat(existing.getPreference().getPreferredContactNumber()).isEqualTo("111-1111");
+        assertThat(existing.getPreference().getPreferredEmail()).isEqualTo("old-pref@example.com");
+        assertThat(existing.getPreference().getOptIn()).isTrue();
+    }
+
+    @Test
+    void applyToExisting_withPreference_noExistingPreference_createsNew() {
+        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
+
+        PreferenceDTO incomingPref = new PreferenceDTO("333-3333", "new-pref@example.com", true);
+        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com", null, null, incomingPref);
+        transformer.applyToExisting(existing, event);
+
+        assertThat(existing.getPreference()).isNotNull();
+        assertThat(existing.getPreference().getPreferredContactNumber()).isEqualTo("333-3333");
+        assertThat(existing.getPreference().getPreferredEmail()).isEqualTo("new-pref@example.com");
+        assertThat(existing.getPreference().getOptIn()).isTrue();
     }
 }

@@ -3,9 +3,11 @@ package com.example.persontransformer.transform;
 import com.example.persontransformer.domain.Address;
 import com.example.persontransformer.domain.Person;
 import com.example.persontransformer.domain.Phone;
+import com.example.persontransformer.domain.Preference;
 import com.example.persontransformer.dto.AddressDTO;
 import com.example.persontransformer.dto.PersonEvent;
 import com.example.persontransformer.dto.PhoneDTO;
+import com.example.persontransformer.dto.PreferenceDTO;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -35,6 +37,7 @@ public class PersonTransformer {
         );
         person.setAddresses(transformAddresses(event.getAddresses()));
         person.setPhones(transformPhones(event.getPhones()));
+        person.setPreference(transformPreference(event.getPreference()));
         return person;
     }
 
@@ -56,6 +59,9 @@ public class PersonTransformer {
         }
         if (event.getPhones() != null) {
             existing.setPhones(transformPhones(event.getPhones()));
+        }
+        if (event.getPreference() != null) {
+            existing.setPreference(mergePreference(existing.getPreference(), event.getPreference()));
         }
     }
 
@@ -99,6 +105,39 @@ public class PersonTransformer {
                 trim(dto.getPhoneNumber()),
                 trim(dto.getPhoneType())
         );
+    }
+
+    Preference transformPreference(PreferenceDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        return new Preference(
+                trim(dto.getPreferredContactNumber()),
+                trim(dto.getPreferredEmail()),
+                dto.getOptIn()
+        );
+    }
+
+    /**
+     * Merges incoming PreferenceDTO onto an existing Preference.
+     * Non-null incoming fields win; null incoming fields keep existing values.
+     * optIn defaults to false when both existing and incoming are null.
+     */
+    Preference mergePreference(Preference existing, PreferenceDTO incoming) {
+        if (incoming == null) {
+            return existing;
+        }
+        Preference base = existing != null ? existing : new Preference();
+        if (incoming.getPreferredContactNumber() != null) {
+            base.setPreferredContactNumber(trim(incoming.getPreferredContactNumber()));
+        }
+        if (incoming.getPreferredEmail() != null) {
+            base.setPreferredEmail(trim(incoming.getPreferredEmail()));
+        }
+        if (incoming.getOptIn() != null) {
+            base.setOptIn(incoming.getOptIn());
+        }
+        return base;
     }
 
     /**
