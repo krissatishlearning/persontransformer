@@ -31,6 +31,8 @@ public class PersonTransformer {
                 trim(event.getFirstName()),
                 trim(event.getLastName()),
                 normalizedEmail,
+                trim(event.getRace()),
+                trim(event.getEthnicity()),
                 Instant.now()
         );
         person.setAddresses(transformAddresses(event.getAddresses()));
@@ -49,6 +51,8 @@ public class PersonTransformer {
         existing.setLastName(mergeField(existing.getLastName(), trim(event.getLastName())));
         String mergedEmail = mergeField(existing.getEmail(), event.getEmail());
         existing.setEmail(normalizeEmail(mergedEmail));
+        existing.setRace(mergeField(existing.getRace(), trim(event.getRace())));
+        existing.setEthnicity(mergeField(existing.getEthnicity(), trim(event.getEthnicity())));
         existing.setUpdatedAt(Instant.now());
 
         if (event.getAddresses() != null) {
