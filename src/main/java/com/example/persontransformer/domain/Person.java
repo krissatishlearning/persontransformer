@@ -23,6 +23,7 @@ public class Person {
     private Instant updatedAt;
     private List<Address> addresses;
     private List<Phone> phones;
+    private Preference preference;
 
     public Person() {
         this.addresses = new ArrayList<>();
@@ -113,5 +114,13 @@ public class Person {
 
     public void setPhones(List<Phone> phones) {
         this.phones = phones;
+    }
+
+    public Preference getPreference() {
+        return preference;
+    }
+
+    public void setPreference(Preference preference) {
+        this.preference = preference;
     }
 }
