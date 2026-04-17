@@ -23,6 +23,7 @@ public class Person {
     private Instant updatedAt;
     private List<Address> addresses;
     private List<Phone> phones;
+    private PersonIdentifier ssn;
 
     public Person() {
         this.addresses = new ArrayList<>();
@@ -49,6 +50,18 @@ public class Person {
         this.updatedAt = updatedAt;
         this.addresses = addresses != null ? addresses : new ArrayList<>();
         this.phones = phones != null ? phones : new ArrayList<>();
+    }
+
+    public Person(String id, String externalId, String firstName, String lastName, String email, Instant updatedAt, List<Address> addresses, List<Phone> phones, PersonIdentifier ssn) {
+        this.id = id;
+        this.externalId = externalId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.updatedAt = updatedAt;
+        this.addresses = addresses != null ? addresses : new ArrayList<>();
+        this.phones = phones != null ? phones : new ArrayList<>();
+        this.ssn = ssn;
     }
 
     public String getId() {
@@ -113,5 +126,13 @@ public class Person {
 
     public void setPhones(List<Phone> phones) {
         this.phones = phones;
+    }
+
+    public PersonIdentifier getSsn() {
+        return ssn;
+    }
+
+    public void setSsn(PersonIdentifier ssn) {
+        this.ssn = ssn;
     }
 }
