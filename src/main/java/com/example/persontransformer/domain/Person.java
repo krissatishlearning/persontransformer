@@ -23,6 +23,7 @@ public class Person {
     private Instant updatedAt;
     private List<Address> addresses;
     private List<Phone> phones;
+    private PersonIdentifier ssn;
 
     public Person() {
         this.addresses = new ArrayList<>();
@@ -113,5 +114,13 @@ public class Person {
 
     public void setPhones(List<Phone> phones) {
         this.phones = phones;
+    }
+
+    public PersonIdentifier getSsn() {
+        return ssn;
+    }
+
+    public void setSsn(PersonIdentifier ssn) {
+        this.ssn = ssn;
     }
 }
