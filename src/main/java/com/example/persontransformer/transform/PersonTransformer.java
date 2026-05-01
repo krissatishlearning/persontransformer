@@ -11,11 +11,14 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Transforms incoming Kafka person events into the domain Person model.
  * Normalizes email (lowercase, trim) and trims string fields.
+ *
+ * <p>Technical debt: {@code Instant.now()} is called directly, making exact
+ * {@code updatedAt} assertions non-deterministic in tests. A {@code java.time.Clock}
+ * should be injected via constructor in a future refactor.
  */
 @Component
 public class PersonTransformer {
@@ -33,6 +36,8 @@ public class PersonTransformer {
                 normalizedEmail,
                 Instant.now()
         );
+        person.setRace(trim(event.getRace()));
+        person.setEthnicity(trim(event.getEthnicity()));
         person.setAddresses(transformAddresses(event.getAddresses()));
         person.setPhones(transformPhones(event.getPhones()));
         return person;
@@ -49,6 +54,8 @@ public class PersonTransformer {
         existing.setLastName(mergeField(existing.getLastName(), trim(event.getLastName())));
         String mergedEmail = mergeField(existing.getEmail(), event.getEmail());
         existing.setEmail(normalizeEmail(mergedEmail));
+        existing.setRace(mergeField(existing.getRace(), trim(event.getRace())));
+        existing.setEthnicity(mergeField(existing.getEthnicity(), trim(event.getEthnicity())));
         existing.setUpdatedAt(Instant.now());
 
         if (event.getAddresses() != null) {
@@ -65,7 +72,7 @@ public class PersonTransformer {
         }
         return addressDTOs.stream()
                 .map(this::transformAddress)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     Address transformAddress(AddressDTO dto) {
@@ -88,7 +95,7 @@ public class PersonTransformer {
         }
         return phoneDTOs.stream()
                 .map(this::transformPhone)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     Phone transformPhone(PhoneDTO dto) {
