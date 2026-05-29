@@ -8,10 +8,10 @@ import com.example.persontransformer.dto.PersonEvent;
 import com.example.persontransformer.dto.PhoneDTO;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Transforms incoming Kafka person events into the domain Person model.
@@ -19,6 +19,12 @@ import java.util.stream.Collectors;
  */
 @Component
 public class PersonTransformer {
+
+    private final Clock clock;
+
+    public PersonTransformer(Clock clock) {
+        this.clock = clock;
+    }
 
     public Person transform(PersonEvent event) {
         if (event == null) {
@@ -31,7 +37,9 @@ public class PersonTransformer {
                 trim(event.getFirstName()),
                 trim(event.getLastName()),
                 normalizedEmail,
-                Instant.now()
+                trim(event.getRace()),
+                trim(event.getEthnicity()),
+                Instant.now(clock)
         );
         person.setAddresses(transformAddresses(event.getAddresses()));
         person.setPhones(transformPhones(event.getPhones()));
@@ -49,7 +57,9 @@ public class PersonTransformer {
         existing.setLastName(mergeField(existing.getLastName(), trim(event.getLastName())));
         String mergedEmail = mergeField(existing.getEmail(), event.getEmail());
         existing.setEmail(normalizeEmail(mergedEmail));
-        existing.setUpdatedAt(Instant.now());
+        existing.setRace(mergeField(existing.getRace(), trim(event.getRace())));
+        existing.setEthnicity(mergeField(existing.getEthnicity(), trim(event.getEthnicity())));
+        existing.setUpdatedAt(Instant.now(clock));
 
         if (event.getAddresses() != null) {
             existing.setAddresses(transformAddresses(event.getAddresses()));
@@ -65,7 +75,7 @@ public class PersonTransformer {
         }
         return addressDTOs.stream()
                 .map(this::transformAddress)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     Address transformAddress(AddressDTO dto) {
@@ -88,7 +98,7 @@ public class PersonTransformer {
         }
         return phoneDTOs.stream()
                 .map(this::transformPhone)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     Phone transformPhone(PhoneDTO dto) {

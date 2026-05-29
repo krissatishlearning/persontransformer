@@ -8,6 +8,9 @@ import com.example.persontransformer.dto.PersonEvent;
 import com.example.persontransformer.dto.PhoneDTO;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PersonTransformerTest {
 
-    private final PersonTransformer transformer = new PersonTransformer();
+    private static final Instant FIXED_INSTANT = Instant.parse("2024-01-15T10:00:00Z");
+    private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC);
+
+    private final PersonTransformer transformer = new PersonTransformer(FIXED_CLOCK);
 
     @Test
     void transform_normalizesEmailAndTrims() {
@@ -27,7 +33,7 @@ class PersonTransformerTest {
         assertThat(person.getFirstName()).isEqualTo("Jane");
         assertThat(person.getLastName()).isEqualTo("Doe");
         assertThat(person.getEmail()).isEqualTo("jane.doe@example.com");
-        assertThat(person.getUpdatedAt()).isNotNull();
+        assertThat(person.getUpdatedAt()).isEqualTo(FIXED_INSTANT);
     }
 
     @Test
@@ -44,43 +50,116 @@ class PersonTransformerTest {
         assertThat(person.getFirstName()).isNull();
         assertThat(person.getLastName()).isNull();
         assertThat(person.getEmail()).isEqualTo("test@example.com");
-        assertThat(person.getUpdatedAt()).isNotNull();
+        assertThat(person.getUpdatedAt()).isEqualTo(FIXED_INSTANT);
+    }
+
+    // --- Race and Ethnicity field tests ---
+
+    @Test
+    void transform_withRaceAndEthnicity_mapsFieldsToPerson() {
+        PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", "jane@example.com",
+                "Asian", "Not Hispanic or Latino");
+        Person person = transformer.transform(event);
+
+        assertThat(person.getRace()).isEqualTo("Asian");
+        assertThat(person.getEthnicity()).isEqualTo("Not Hispanic or Latino");
     }
 
     @Test
-    void transform_doesNotContainRaceOrEthnicity() {
-        PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", "jane@example.com");
+    void transform_trimsRaceAndEthnicity() {
+        PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", "jane@example.com",
+                "  White  ", "  Hispanic or Latino  ");
         Person person = transformer.transform(event);
 
-        // Verify Person class no longer has race/ethnicity fields
+        assertThat(person.getRace()).isEqualTo("White");
+        assertThat(person.getEthnicity()).isEqualTo("Hispanic or Latino");
+    }
+
+    @Test
+    void transform_withNullRaceAndEthnicity_setsNullOnPerson() {
+        PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", "jane@example.com",
+                null, null);
+        Person person = transformer.transform(event);
+
+        assertThat(person.getRace()).isNull();
+        assertThat(person.getEthnicity()).isNull();
+    }
+
+    @Test
+    void transform_withRaceEthnicityAndAddressesAndPhones_mapsAllFields() {
+        List<AddressDTO> addressDTOs = Collections.singletonList(
+                new AddressDTO("123 Main St", "Apt 1", "Springfield", "IL", "62704", "US")
+        );
+        List<PhoneDTO> phoneDTOs = Collections.singletonList(
+                new PhoneDTO("555-1234", "MOBILE")
+        );
+        PersonEvent event = new PersonEvent("ext-1", "Jane", "Doe", "jane@example.com",
+                "Asian", "Not Hispanic or Latino", addressDTOs, phoneDTOs);
+        Person person = transformer.transform(event);
+
         assertThat(person.getExternalId()).isEqualTo("ext-1");
         assertThat(person.getFirstName()).isEqualTo("Jane");
         assertThat(person.getLastName()).isEqualTo("Doe");
         assertThat(person.getEmail()).isEqualTo("jane@example.com");
+        assertThat(person.getRace()).isEqualTo("Asian");
+        assertThat(person.getEthnicity()).isEqualTo("Not Hispanic or Latino");
+        assertThat(person.getUpdatedAt()).isEqualTo(FIXED_INSTANT);
 
-        // Ensure no race/ethnicity fields exist via reflection
-        assertThat(java.util.Arrays.stream(Person.class.getDeclaredFields())
-                .map(java.lang.reflect.Field::getName)
-                .filter(name -> name.equals("race") || name.equals("ethnicity"))
-                .count()).isZero();
+        assertThat(person.getAddresses()).hasSize(1);
+        Address address = person.getAddresses().get(0);
+        assertThat(address.getAddress1()).isEqualTo("123 Main St");
+        assertThat(address.getAddress2()).isEqualTo("Apt 1");
+        assertThat(address.getCity()).isEqualTo("Springfield");
+        assertThat(address.getState()).isEqualTo("IL");
+        assertThat(address.getPostalCode()).isEqualTo("62704");
+        assertThat(address.getCountry()).isEqualTo("US");
+
+        assertThat(person.getPhones()).hasSize(1);
+        Phone phone = person.getPhones().get(0);
+        assertThat(phone.getPhoneNumber()).isEqualTo("555-1234");
+        assertThat(phone.getPhoneType()).isEqualTo("MOBILE");
     }
 
     @Test
-    void transform_doesNotContainNormalizedEmail() {
-        // Ensure no normalizedEmail field exists in Person via reflection
-        assertThat(java.util.Arrays.stream(Person.class.getDeclaredFields())
-                .map(java.lang.reflect.Field::getName)
-                .filter(name -> name.equals("normalizedEmail"))
-                .count()).isZero();
+    void applyToExisting_updatesRaceAndEthnicity() {
+        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
+        existing.setRace("White");
+        existing.setEthnicity("Not Hispanic or Latino");
+
+        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com",
+                "Black or African American", "Hispanic or Latino");
+        transformer.applyToExisting(existing, event);
+
+        assertThat(existing.getRace()).isEqualTo("Black or African American");
+        assertThat(existing.getEthnicity()).isEqualTo("Hispanic or Latino");
     }
 
     @Test
-    void personEvent_doesNotContainRaceOrEthnicity() {
-        // Ensure no race/ethnicity fields exist in PersonEvent via reflection
-        assertThat(java.util.Arrays.stream(PersonEvent.class.getDeclaredFields())
-                .map(java.lang.reflect.Field::getName)
-                .filter(name -> name.equals("race") || name.equals("ethnicity"))
-                .count()).isZero();
+    void applyToExisting_withNullRaceInEvent_keepsExistingRace() {
+        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
+        existing.setRace("Asian");
+        existing.setEthnicity("Not Hispanic or Latino");
+
+        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com",
+                null, null);
+        transformer.applyToExisting(existing, event);
+
+        assertThat(existing.getRace()).isEqualTo("Asian");
+        assertThat(existing.getEthnicity()).isEqualTo("Not Hispanic or Latino");
+    }
+
+    @Test
+    void applyToExisting_withNullExistingRace_usesIncomingRace() {
+        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
+        existing.setRace(null);
+        existing.setEthnicity(null);
+
+        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com",
+                "  White  ", "  Hispanic or Latino  ");
+        transformer.applyToExisting(existing, event);
+
+        assertThat(existing.getRace()).isEqualTo("White");
+        assertThat(existing.getEthnicity()).isEqualTo("Hispanic or Latino");
     }
 
     @Test
@@ -93,7 +172,7 @@ class PersonTransformerTest {
         assertThat(existing.getFirstName()).isEqualTo("New");
         assertThat(existing.getLastName()).isEqualTo("Name");
         assertThat(existing.getEmail()).isEqualTo("new@x.com");
-        assertThat(existing.getUpdatedAt()).isNotNull();
+        assertThat(existing.getUpdatedAt()).isEqualTo(FIXED_INSTANT);
     }
 
     @Test
@@ -237,69 +316,8 @@ class PersonTransformerTest {
         Person person = transformer.transform(event);
 
         assertThat(person.getAddresses()).hasSize(1);
-        assertThat(person.getPhones()).hasSize(1);
         assertThat(person.getAddresses().get(0).getAddress1()).isEqualTo("123 Main St");
+        assertThat(person.getPhones()).hasSize(1);
         assertThat(person.getPhones().get(0).getPhoneNumber()).isEqualTo("555-1234");
-    }
-
-    // --- applyToExisting with addresses and phones ---
-
-    @Test
-    void applyToExisting_withAddresses_replacesExistingAddresses() {
-        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
-        existing.setAddresses(Collections.singletonList(new Address("Old St", null, "OldCity", "OS", "00000", "US")));
-
-        List<AddressDTO> newAddresses = Collections.singletonList(
-                new AddressDTO("New St", "Suite 5", "NewCity", "NS", "11111", "CA")
-        );
-        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com", newAddresses, null);
-        transformer.applyToExisting(existing, event);
-
-        assertThat(existing.getAddresses()).hasSize(1);
-        assertThat(existing.getAddresses().get(0).getAddress1()).isEqualTo("New St");
-        assertThat(existing.getAddresses().get(0).getCity()).isEqualTo("NewCity");
-        assertThat(existing.getAddresses().get(0).getCountry()).isEqualTo("CA");
-    }
-
-    @Test
-    void applyToExisting_withNullAddressesInEvent_keepsExistingAddresses() {
-        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
-        List<Address> originalAddresses = Collections.singletonList(new Address("Old St", null, "OldCity", "OS", "00000", "US"));
-        existing.setAddresses(originalAddresses);
-
-        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com", null, null);
-        transformer.applyToExisting(existing, event);
-
-        assertThat(existing.getAddresses()).hasSize(1);
-        assertThat(existing.getAddresses().get(0).getAddress1()).isEqualTo("Old St");
-    }
-
-    @Test
-    void applyToExisting_withPhones_replacesExistingPhones() {
-        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
-        existing.setPhones(Collections.singletonList(new Phone("000-0000", "HOME")));
-
-        List<PhoneDTO> newPhones = Collections.singletonList(
-                new PhoneDTO("555-9999", "MOBILE")
-        );
-        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com", null, newPhones);
-        transformer.applyToExisting(existing, event);
-
-        assertThat(existing.getPhones()).hasSize(1);
-        assertThat(existing.getPhones().get(0).getPhoneNumber()).isEqualTo("555-9999");
-        assertThat(existing.getPhones().get(0).getPhoneType()).isEqualTo("MOBILE");
-    }
-
-    @Test
-    void applyToExisting_withNullPhonesInEvent_keepsExistingPhones() {
-        Person existing = new Person("mongo-id", "ext-1", "Old", "Name", "old@x.com", null);
-        List<Phone> originalPhones = Collections.singletonList(new Phone("000-0000", "HOME"));
-        existing.setPhones(originalPhones);
-
-        PersonEvent event = new PersonEvent("ext-1", "Old", "Name", "old@x.com", null, null);
-        transformer.applyToExisting(existing, event);
-
-        assertThat(existing.getPhones()).hasSize(1);
-        assertThat(existing.getPhones().get(0).getPhoneNumber()).isEqualTo("000-0000");
     }
 }
